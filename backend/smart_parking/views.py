@@ -58,35 +58,38 @@ def get_driving_time(origin, destination):
     return data["rows"][0]["elements"][0]["duration"]["value"]
 
 
+"""
 class APIEndpoint(View):
     def get(self, request):
-        data = json.loads(request.body.decode("utf-8"))
         result = self._do(**data)
         return JsonResponse(result, safe=False)
 
     def _do(self, **kwargs):
         raise NotImplementedError()
+"""
 
 
-class FindParkingsEndpoint(APIEndpoint):
-    def _find_parking(self, destination, arrival_time):
-        distance = {}
-        for name, parking_adress in parkings.items():
-            distance[name] = get_travel_time(destination, parking_adress, TravelModes.PEDESTRIAN)
-        for name, distance in sorted(distance.items(), key=lambda x: x[1]):
-            occupation = get_model_prediction(name, arrival_time)
-            if occupation < 0.8:
-                return {"adress": parkings[name], "occupation": occupation}
+def find_parking(destination, arrival_time):
+    distance = {}
+    for name, parking_adress in parkings.items():
+        distance[name] = get_travel_time(destination, parking_adress, TravelModes.PEDESTRIAN)
+    for name, distance in sorted(distance.items(), key=lambda x: x[1]):
+        occupation = get_model_prediction(name, arrival_time)
+        if occupation < 0.8:
+            return {"adress": parkings[name], "occupation": occupation}
 
-    def _do(self, destination, arrival_time=None, origin=None):
-        assert arrival_time is not None or origin is not None
-        if arrival_time is not None:
-            return self._find_parking(destination, arrival_time)
-        if origin is not None:
-            driving_time = get_travel_time(origin, destination, TravelModes.CAR)
-            current_time = time.time()
-            arrival_time = current_time + driving_time + 7200
-            arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
-            result = self._find_parking(destination, arrival_time)
-            result['arrival_time'] = arrival_time_str
-            return result
+
+class FindParkingsOriginEndpoint(View):
+    def get(self, request, destination, origin):
+        driving_time = get_travel_time(origin, destination, TravelModes.CAR)
+        current_time = time.time()
+        arrival_time = current_time + driving_time + 7200
+        arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
+        result = find_parking(destination, arrival_time)
+        result['arrival_time'] = arrival_time_str
+        return JsonResponse(result)
+
+
+class FindParkingsTimeEndpoint(View):
+    def get(self, request, destination, arrival_time):
+        return JsonResponse(find_parking(destination, arrival_time.replace('T', ' ')))
