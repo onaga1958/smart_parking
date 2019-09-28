@@ -1,6 +1,7 @@
 import pickle
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
 
 schulferien = [
@@ -31,6 +32,13 @@ schulferien = [
     ['2020-12-21', '2021-01-02'],
 ]
 
+parking_capacities = {
+    "hauscityparking": 620,
+    "hausjelmoli": 222,
+    "hausglobus": 178,
+    "hausurania": 607,
+    "haustalgarten": 110,
+}
 
 def culc_feiertage():
     feiertage = pd.DataFrame()
@@ -81,10 +89,22 @@ def shoppingdaysafterfeiertag(df):
         return 100  # in case no holiday found
 
 
-def culc_features(time):
+def load_last_year_dataset(parking_name):
+    last_year_parking_data_path = 'https://parkendd.de/dumps/zuerichpark' + parking_name + '-2018.csv'
+    last_year_parking_data = pd.read_csv(last_year_parking_data_path, names=['Date', 'free'],
+                                         index_col='Date', parse_dates=True)
+    last_year_parking_data.sort_index(inplace=True)
+    last_year_parking_data.dropna(inplace=True)
+    last_year_parking_data['Occupation'] = 100.0 - (
+                last_year_parking_data.free / parking_capacities[parking_name] * 100.0)
+    last_year_parking_data['Occupation'] = last_year_parking_data['Occupation'].astype(int)
+    return last_year_parking_data
+
+
+def culc_features(parking_name, time):
     featurevector = [
         'Weekday', 'Time', 'schoolHolidays', 'toHoliday', 'fromHoliday', 'Christmas',
-        'shoppingSunday',
+        'shoppingSunday', 'Month', 'Last_year',
     ]
 
     df_prob = pd.DataFrame(columns=[0])
@@ -118,6 +138,13 @@ def culc_features(time):
 
     df_prob['shoppingSunday'] = 0
 
+    df_prob['Month'] = df_prob.index.month
+
+    last_year_parking_data = load_last_year_dataset(parking_name)
+    df_prob['Last_year'] = last_year_parking_data[
+        last_year_parking_data.index >= datetime.strptime(time) - pd.DateOffset(years=1)
+    ].iloc[0]['Occupation']
+
     features = df_prob[featurevector].values
     return features
 
@@ -125,6 +152,6 @@ def culc_features(time):
 def get_model_prediction(parking_name, time):
     filename = '../models/' + parking_name + '_model.sav'
     loaded_model = pickle.load(open(filename, 'rb'))
-    features = culc_features(time)
+    features = culc_features(parking_name, time)
     prediction = int(loaded_model.predict(features))
     return prediction / 100.0
