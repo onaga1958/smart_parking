@@ -3,7 +3,7 @@ import json
 from django.views.generic import View
 from django.http import JsonResponse
 
-from .keys import GOOGLE_KEY
+from .keys import GOOGLE_KEY, TOMTOM_KEY
 from .utils import download
 
 parkings = {
@@ -15,12 +15,29 @@ parkings = {
 }
 
 
-def get_distanse(origin, destination):
+# def get_gps_cords(adress):
+# url = (
+# 'https://maps.googleapis.com/maps/api/geocode/json?'
+# 'address={}&key={}'.format(adress, GOOGLE_KEY)
+# )
+# data = download(url)
+# return data['']
+
+
+def get_route(origin, destination):
+    pass
+    # url = (
+    # 'https://api.tomtom.com/routing/1/calculateRoute/{}:{}'
+    # )
+    # data = download(url)
+
+
+def get_driving_time(origin, destination):
     url = (
         'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&'
         'origins={}&destinations={}&key={}'.format(origin, destination, GOOGLE_KEY)
     )
-    data = json.loads(download(url))
+    data = download(url)
     return data["rows"][0]["elements"][0]["duration"]["value"]
 
 
@@ -39,11 +56,15 @@ class APIEndpoint(View):
 
 
 class FindParkingsEndpoint(APIEndpoint):
-    def _do(self, adress=None, time=None):
+    def _do(self, destination, time=None, origin=None):
         distance = {}
-        for name, parking_adress in parkings.items():
-            distance[name] = get_distanse(adress, parking_adress)
-        for name, distance in sorted(distance.items(), key=lambda x: x[1]):
-            occupation = get_model_prediction(name, time)
-            if occupation < 0.8:
-                return {"adress": parkings[name], "occupation": occupation}
+        assert time is not None or origin is not None
+        if time is not None:
+            for name, parking_adress in parkings.items():
+                distance[name] = get_driving_time(destination, parking_adress)
+            for name, distance in sorted(distance.items(), key=lambda x: x[1]):
+                occupation = get_model_prediction(name, time)
+                if occupation < 0.8:
+                    return {"adress": parkings[name], "occupation": occupation}
+        if origin is not None:
+            driving_time = get_driving_time(origin, destination)
