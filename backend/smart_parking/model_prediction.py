@@ -40,6 +40,7 @@ parking_capacities = {
     "haustalgarten": 110,
 }
 
+
 def culc_feiertage():
     feiertage = pd.DataFrame()
     for year in range(2016, 2021):
@@ -90,9 +91,13 @@ def shoppingdaysafterfeiertag(df):
 
 
 def load_last_year_dataset(parking_name):
-    last_year_parking_data_path = 'https://parkendd.de/dumps/zuerichpark' + parking_name + '-2018.csv'
-    last_year_parking_data = pd.read_csv(last_year_parking_data_path, names=['Date', 'free'],
-                                         index_col='Date', parse_dates=True)
+    last_year_parking_data_path = (
+        'https://parkendd.de/dumps/zuerichpark' + parking_name + '-2018.csv'
+    )
+    last_year_parking_data = pd.read_csv(
+        last_year_parking_data_path, names=['Date', 'free'],
+        index_col='Date', parse_dates=True,
+    )
     last_year_parking_data.sort_index(inplace=True)
     last_year_parking_data.dropna(inplace=True)
     last_year_parking_data['Occupation'] = 100.0 - (
@@ -141,8 +146,9 @@ def culc_features(parking_name, time):
     df_prob['Month'] = df_prob.index.month
 
     last_year_parking_data = load_last_year_dataset(parking_name)
+    minus_year = datetime.strptime(time, format) - pd.DateOffset(years=1)
     df_prob['Last_year'] = last_year_parking_data[
-        last_year_parking_data.index >= datetime.strptime(time) - pd.DateOffset(years=1)
+        last_year_parking_data.index >= minus_year
     ].iloc[0]['Occupation']
 
     features = df_prob[featurevector].values

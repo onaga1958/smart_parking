@@ -58,13 +58,18 @@ def find_parking(destination, arrival_time):
 def calc_arrival_time_by_origin(origin, destination):
     driving_time = get_travel_time(origin, destination, TravelModes.CAR)
     current_time = time.time()
-    arrival_time = current_time + driving_time + 7200
+    arrival_time = current_time + driving_time + 7200 + 7200
     return time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
 
 
 class FindParkingsEndpoint(View):
     def get(self, request):
         destination = request.GET['coordinates']
+        splited_destination = destination.split(',')
+        if len(splited_destination) > 2:
+            destination = (
+                '.'.join(splited_destination[0:2]) + ',' + '.'.join(splited_destination[2:4])
+            )
         arrival_time = request.GET.get('arrival_time')
         origin = request.GET.get('origin')
         result = {}
