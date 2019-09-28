@@ -4,9 +4,15 @@ import time
 from django.views.generic import View
 from django.http import JsonResponse
 
-from .keys import GOOGLE_KEY
+from .keys import GOOGLE_KEY, TOMTOM_KEY
 from .utils import download
 from .model_prediction import get_model_prediction
+
+
+class TravelModes:
+    CAR = 'car'
+    PEDESTRIAN = 'pedestrian'
+
 
 parkings = {
     "hauscityparking": "47.3746938,8.535169",
@@ -34,12 +40,13 @@ parking_capacities = {
 # return data['']
 
 
-def get_route(origin, destination):
-    pass
-    # url = (
-    # 'https://api.tomtom.com/routing/1/calculateRoute/{}:{}'
-    # )
-    # data = download(url)
+def get_travel_time(origin, destination, travel_mode):
+    url = (
+        'https://api.tomtom.com/routing/1/calculateRoute/'
+        '{}:{}/json?travelMode={}&key={}'.format(origin, destination, travel_mode, TOMTOM_KEY)
+    )
+    data = download(url)
+    return data['routes'][0]['summary']['travelTimeInSeconds']
 
 
 def get_driving_time(origin, destination):
@@ -65,7 +72,7 @@ class FindParkingsEndpoint(APIEndpoint):
     def _find_parking(self, destination, arrival_time):
         distance = {}
         for name, parking_adress in parkings.items():
-            distance[name] = get_driving_time(destination, parking_adress)
+            distance[name] = get_travel_time(destination, parking_adress, TravelModes.PEDESTRIAN)
         for name, distance in sorted(distance.items(), key=lambda x: x[1]):
             occupation = get_model_prediction(name, arrival_time)
             if occupation < 0.8:
@@ -76,7 +83,7 @@ class FindParkingsEndpoint(APIEndpoint):
         if arrival_time is not None:
             return self._find_parking(destination, arrival_time)
         if origin is not None:
-            driving_time = get_driving_time(origin, destination)
+            driving_time = get_travel_time(origin, destination, TravelModes.CAR)
             current_time = time.time()
             arrival_time = current_time + driving_time + 7200
             arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
