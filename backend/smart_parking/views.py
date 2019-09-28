@@ -43,6 +43,14 @@ schulferien = [['2016-02-13', '2016-02-28'],
                ['2020-10-05', '2020-10-17'],
                ['2020-12-21', '2021-01-02']]
 
+parking_capacities = {
+    "hauscityparking": 620,
+    "hausjelmoli": 222,
+    "hausglobus": 178,
+    "hausurania": 607,
+    "haustalgarten": 110,
+}
+
 # def get_gps_cords(adress):
 # url = (
 # 'https://maps.googleapis.com/maps/api/geocode/json?'
@@ -153,7 +161,7 @@ def get_model_prediction(parking_name, time):
     loaded_model = pickle.load(open(filename, 'rb'))
     features = culc_features(time)
     prediction = int(loaded_model.predict([features]))
-    return prediction
+    return prediction / 100.0
 
 
 class APIEndpoint(View):
