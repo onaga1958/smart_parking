@@ -149,7 +149,7 @@ def culc_features(time):
 
 
 def get_model_prediction(parking_name, time):
-    filename = './models/' + parking_name + '_model.sav'
+    filename = '../models/' + parking_name + '_model.sav'
     loaded_model = pickle.load(open(filename, 'rb'))
     features = culc_features(time)
     prediction = int(loaded_model.predict([features]))
