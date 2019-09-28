@@ -1,10 +1,10 @@
 import json
-import requests
 
 from django.views.generic import View
 from django.http import JsonResponse
 
-from keys import GOOGLE_KEY
+from .keys import GOOGLE_KEY
+from .utils import download
 
 parkings = {
     "City Parking": "Gessnerallee 14, 8001 Zürich",
@@ -20,7 +20,7 @@ def get_distanse(origin, destination):
         'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&'
         'origins={}&destinations={}&key={}'.format(origin, destination, GOOGLE_KEY)
     )
-    data = requests.get(url)
+    data = json.loads(download(url))
     return data["rows"][0]["elements"][0]["duration"]["value"]
 
 
