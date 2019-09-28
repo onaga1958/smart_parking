@@ -31,14 +31,6 @@ parking_capacities = {
     "haustalgarten": 110,
 }
 
-# def get_gps_cords(adress):
-# url = (
-# 'https://maps.googleapis.com/maps/api/geocode/json?'
-# 'address={}&key={}'.format(adress, GOOGLE_KEY)
-# )
-# data = download(url)
-# return data['']
-
 
 def get_travel_time(origin, destination, travel_mode):
     url = (
@@ -56,17 +48,6 @@ def get_driving_time(origin, destination):
     )
     data = download(url)
     return data["rows"][0]["elements"][0]["duration"]["value"]
-
-
-"""
-class APIEndpoint(View):
-    def get(self, request):
-        result = self._do(**data)
-        return JsonResponse(result, safe=False)
-
-    def _do(self, **kwargs):
-        raise NotImplementedError()
-"""
 
 
 def find_parking(destination, arrival_time):
