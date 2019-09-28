@@ -23,13 +23,8 @@ parkings = {
 }
 
 
-parking_capacities = {
-    "hauscityparking": 620,
-    "hausjelmoli": 222,
-    "hausglobus": 178,
-    "hausurania": 607,
-    "haustalgarten": 110,
-}
+def get_rain(datetime):
+    pass
 
 
 def get_travel_time(origin, destination, travel_mode):
@@ -60,17 +55,23 @@ def find_parking(destination, arrival_time):
             return {"adress": parkings[name], "occupation": occupation}
 
 
-class FindParkingsOriginEndpoint(View):
-    def get(self, request, destination, origin):
-        driving_time = get_travel_time(origin, destination, TravelModes.CAR)
-        current_time = time.time()
-        arrival_time = current_time + driving_time + 7200
-        arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
-        result = find_parking(destination, arrival_time)
-        result['arrival_time'] = arrival_time_str
+def calc_arrival_time_by_origin(origin, destination):
+    driving_time = get_travel_time(origin, destination, TravelModes.CAR)
+    current_time = time.time()
+    arrival_time = current_time + driving_time + 7200
+    return time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
+
+
+class FindParkingsEndpoint(View):
+    def get(self, request):
+        destination = request.GET['coordinates']
+        arrival_time = request.GET.get('arrival_time')
+        origin = request.GET.get('origin')
+        result = {}
+        if arrival_time is not None:
+            arrival_time = arrival_time.replace('T', ' ')
+        else:
+            arrival_time = calc_arrival_time_by_origin(origin, destination)
+            result['arrival_time'] = arrival_time
+        result.update(find_parking(destination, arrival_time))
         return JsonResponse(result)
-
-
-class FindParkingsTimeEndpoint(View):
-    def get(self, request, destination, arrival_time):
-        return JsonResponse(find_parking(destination, arrival_time.replace('T', ' ')))
