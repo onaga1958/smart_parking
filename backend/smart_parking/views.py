@@ -73,7 +73,7 @@ class FindParkingsEndpoint(APIEndpoint):
         if origin is not None:
             driving_time = get_driving_time(origin, destination)
             current_time = time.time()
-            arrival_time = current_time + driving_time
+            arrival_time = current_time + driving_time + 7200
             arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
             result = self._find_parking(destination, arrival_time)
             result['arrival_time'] = arrival_time_str

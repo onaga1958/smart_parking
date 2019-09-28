@@ -105,3 +105,6 @@ venv.bak/
 
 # API keys
 backend/smart_parking/keys.py
+
+# models
+*.sav
