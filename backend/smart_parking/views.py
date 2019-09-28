@@ -1,17 +1,18 @@
 import json
+import time
 
 from django.views.generic import View
 from django.http import JsonResponse
 
-from .keys import GOOGLE_KEY, TOMTOM_KEY
+from .keys import GOOGLE_KEY
 from .utils import download
 
 parkings = {
-    "City Parking": "Gessnerallee 14, 8001 Zürich",
-    "Jelmoli": "Steinmühlepl. 1, 8001 Zürich",
-    "Globus": "Schweizergasse 11, 8001 Zürich",
-    "Urania": "Uraniastrasse 3, 8001 Zürich",
-    "Talgarten": "Nüschelerstrasse 31, 8001 Zürich",
+    "City Parking": "47.3746938,8.535169",
+    # "Jelmoli": "47.3743671,8.5349368",
+    # "Globus": "47.3751172,8.5366964",
+    "Urania": "47.374476,8.5380093",
+    "Talgarten": "47.3720928,8.5346152",
 }
 
 
@@ -41,7 +42,7 @@ def get_driving_time(origin, destination):
     return data["rows"][0]["elements"][0]["duration"]["value"]
 
 
-def get_model_prediction(parking_name, time):
+def get_model_prediction(parking_name, arrival_time):
     return 0.5
 
 
@@ -56,15 +57,24 @@ class APIEndpoint(View):
 
 
 class FindParkingsEndpoint(APIEndpoint):
-    def _do(self, destination, time=None, origin=None):
+    def _find_parking(self, destination, arrival_time):
         distance = {}
-        assert time is not None or origin is not None
-        if time is not None:
-            for name, parking_adress in parkings.items():
-                distance[name] = get_driving_time(destination, parking_adress)
-            for name, distance in sorted(distance.items(), key=lambda x: x[1]):
-                occupation = get_model_prediction(name, time)
-                if occupation < 0.8:
-                    return {"adress": parkings[name], "occupation": occupation}
+        for name, parking_adress in parkings.items():
+            distance[name] = get_driving_time(destination, parking_adress)
+        for name, distance in sorted(distance.items(), key=lambda x: x[1]):
+            occupation = get_model_prediction(name, arrival_time)
+            if occupation < 0.8:
+                return {"adress": parkings[name], "occupation": occupation}
+
+    def _do(self, destination, arrival_time=None, origin=None):
+        assert arrival_time is not None or origin is not None
+        if arrival_time is not None:
+            return self._find_parking(destination, arrival_time)
         if origin is not None:
             driving_time = get_driving_time(origin, destination)
+            current_time = time.time()
+            arrival_time = current_time + driving_time
+            arrival_time_str = time.strftime(r"%Y-%m-%d %H:%M:%S", time.localtime(arrival_time))
+            result = self._find_parking(destination, arrival_time)
+            result['arrival_time'] = arrival_time_str
+            return result
