@@ -43,15 +43,6 @@ def get_travel_time(origin, destination, travel_mode):
     return data['routes'][0]['summary']['travelTimeInSeconds']
 
 
-def get_driving_time(origin, destination):
-    url = (
-        'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&'
-        'origins={}&destinations={}&key={}'.format(origin, destination, GOOGLE_KEY)
-    )
-    data = download(url)
-    return data["rows"][0]["elements"][0]["duration"]["value"]
-
-
 def calc_penalty(occupation, distance, is_bad_weather):
     occupation_score = 0
     if occupation > 0.75:
