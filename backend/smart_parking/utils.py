@@ -5,6 +5,9 @@ import sys
 from time import sleep
 
 
+FORMAT = r'%Y-%m-%d %H:%M:%S'
+
+
 def download(url, n_tries=2, time_to_sleep=1, time_to_sleep_multiplier=1):
     while n_tries > 0:
         resp = requests.get(url)

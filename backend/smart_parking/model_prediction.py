@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from .utils import FORMAT
 
 
 schulferien = [
@@ -115,8 +116,7 @@ def culc_features(parking_name, time):
     df_prob = pd.DataFrame(columns=[0])
     df_prob = df_prob.append([0])
 
-    format = '%Y-%m-%d %H:%M:%S'
-    df_prob['Datetime'] = pd.to_datetime(time, format=format)
+    df_prob['Datetime'] = pd.to_datetime(time, format=FORMAT)
     df_prob = df_prob.set_index(pd.DatetimeIndex(df_prob['Datetime']))
     df_prob['Weekday'] = df_prob.index.dayofweek
 
@@ -146,7 +146,7 @@ def culc_features(parking_name, time):
     df_prob['Month'] = df_prob.index.month
 
     last_year_parking_data = load_last_year_dataset(parking_name)
-    minus_year = datetime.strptime(time, format) - pd.DateOffset(years=1)
+    minus_year = datetime.strptime(time, FORMAT) - pd.DateOffset(years=1)
     df_prob['Last_year'] = last_year_parking_data[
         last_year_parking_data.index >= minus_year
     ].iloc[0]['Occupation']
