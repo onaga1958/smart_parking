@@ -6,22 +6,13 @@ from django.views.generic import View
 from django.http import JsonResponse
 
 from .keys import GOOGLE_KEY, TOMTOM_KEY
-from .utils import download, FORMAT
+from .utils import download, FORMAT, PARKINGS
 from .model_prediction import get_model_prediction
 
 
 class TravelModes:
     CAR = 'car'
     PEDESTRIAN = 'pedestrian'
-
-
-parkings = {
-    "hauscityparking": "47.3746938,8.535169",
-    # "hausjelmoli": "47.3743671,8.5349368",
-    # "hausglobus": "47.3751172,8.5366964",
-    "hausurania": "47.374476,8.5380093",
-    "haustalgarten": "47.3720928,8.5346152",
-}
 
 
 def bad_weather(arrival_time):
@@ -37,7 +28,6 @@ def bad_weather(arrival_time):
         'startDate={}&endDate={}'.format(prev_date_str, cur_date_str)
     )
     data = download(url)['result'][-1]['values']
-    print(data)
     bad_precipitation = data['precipitation']['value'] > 3
     bad_temperature = data['air_temperature']['value'] < 5
     bad_wind = data['wind_speed_avg_10min']['value'] > 10
@@ -77,15 +67,14 @@ def find_parking(destination, arrival_time):
     min_penalty = 1000000000
     best_parking = None
     is_bad_weather = bad_weather(arrival_time)
-    print(is_bad_weather)
-    for name, parking_adress in parkings.items():
+    for name, parking_adress in PARKINGS.items():
         distance = get_travel_time(destination, parking_adress, TravelModes.PEDESTRIAN)
         occupation = get_model_prediction(name, arrival_time)
         penalty = calc_penalty(occupation, distance, is_bad_weather)
         if penalty < min_penalty:
             min_penalty = penalty
             best_parking = name
-    return {"adress": parkings[best_parking], "occupation": occupation}
+    return {"adress": PARKINGS[best_parking], "occupation": occupation}
 
 
 def calc_arrival_time_by_origin(origin, destination, timezone_addition=7200):

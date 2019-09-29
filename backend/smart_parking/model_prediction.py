@@ -2,7 +2,12 @@ import pickle
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from .utils import FORMAT
+from .utils import FORMAT, PARKINGS
+
+MODELS = {
+    name: pickle.load(open('../models/' + name + '_model.sav', 'rb'))
+    for name in PARKINGS
+}
 
 
 schulferien = [
@@ -156,8 +161,7 @@ def culc_features(parking_name, time):
 
 
 def get_model_prediction(parking_name, time):
-    filename = '../models/' + parking_name + '_model.sav'
-    loaded_model = pickle.load(open(filename, 'rb'))
+    model = MODELS[parking_name]
     features = culc_features(parking_name, time)
-    prediction = int(loaded_model.predict(features))
+    prediction = int(model.predict(features))
     return prediction / 100.0

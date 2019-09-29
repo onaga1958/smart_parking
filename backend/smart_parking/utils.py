@@ -5,6 +5,14 @@ import sys
 from time import sleep
 
 
+PARKINGS = {
+    "hauscityparking": "47.3746938,8.535169",
+    # "hausjelmoli": "47.3743671,8.5349368",
+    # "hausglobus": "47.3751172,8.5366964",
+    "hausurania": "47.374476,8.5380093",
+    "haustalgarten": "47.3720928,8.5346152",
+}
+
 FORMAT = r'%Y-%m-%d %H:%M:%S'
 
 
